@@ -264,7 +264,7 @@ export default function DashboardPage() {
             {/* Weekly Revenue Chart */}
             {analytics && analytics.dailyRevenue && (
               <div className="bg-white rounded-2xl shadow-lg shadow-blue-100/50 p-8 border border-gray-100 mb-8">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                   <h2 className="text-xl font-bold text-gray-800">درآمد هفتگی</h2>
                   <div className="flex gap-4">
                     <div className="text-right">
@@ -281,27 +281,29 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-end justify-between h-72 gap-3">
-                  {analytics.dailyRevenue.map((day, index) => {
-                    const maxRevenue = Math.max(...analytics.dailyRevenue.map(d => d.revenue));
-                    const height = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
-                    return (
-                      <div key={index} className="flex-1 flex flex-col items-center group">
-                        <div 
-                          className="w-full bg-gradient-to-t from-blue-500 to-indigo-500 rounded-t-lg relative transition-all duration-300 group-hover:from-blue-600 group-hover:to-indigo-600 shadow-md" 
-                          style={{ height: `${height}%`, minHeight: '4px' }}
-                        >
-                          <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 text-xs font-semibold text-gray-700 bg-white px-3 py-2 rounded-lg shadow-lg border border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                            {day.revenue > 0 ? new Intl.NumberFormat('fa-IR').format(day.revenue) + ' تومان' : '0 تومان'}
+                <div className="overflow-x-auto">
+                  <div className="flex items-end justify-between h-72 gap-3 min-w-max">
+                    {analytics.dailyRevenue.map((day, index) => {
+                      const maxRevenue = Math.max(...analytics.dailyRevenue.map(d => d.revenue));
+                      const height = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
+                      return (
+                        <div key={index} className="flex-1 flex flex-col items-center group min-w-[60px]">
+                          <div 
+                            className="w-full bg-gradient-to-t from-blue-500 to-indigo-500 rounded-t-lg relative transition-all duration-300 group-hover:from-blue-600 group-hover:to-indigo-600 shadow-md" 
+                            style={{ height: `${height}%`, minHeight: '4px' }}
+                          >
+                            <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 text-xs font-semibold text-gray-700 bg-white px-3 py-2 rounded-lg shadow-lg border border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                              {day.revenue > 0 ? new Intl.NumberFormat('fa-IR').format(day.revenue) + ' تومان' : '0 تومان'}
+                            </div>
                           </div>
+                          <p className="text-xs text-gray-600 mt-3 font-medium">{day.date}</p>
+                          <p className="text-xs text-blue-500 font-semibold">
+                            {day.revenue > 0 ? new Intl.NumberFormat('fa-IR').format(day.revenue) : '0'}
+                          </p>
                         </div>
-                        <p className="text-xs text-gray-600 mt-3 font-medium">{day.date}</p>
-                        <p className="text-xs text-blue-500 font-semibold">
-                          {day.revenue > 0 ? new Intl.NumberFormat('fa-IR').format(day.revenue) : '0'}
-                        </p>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             )}

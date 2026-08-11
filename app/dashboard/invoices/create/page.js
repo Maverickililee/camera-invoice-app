@@ -17,7 +17,8 @@ export default function CreateInvoicePage() {
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState([]);
-  const [customerName, setCustomerName] = useState('');
+  const [customerFirstName, setCustomerFirstName] = useState('');
+  const [customerLastName, setCustomerLastName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [invoiceId, setInvoiceId] = useState(null);
@@ -182,8 +183,8 @@ export default function CreateInvoicePage() {
   };
 
   const handleCreateInvoice = async () => {
-    if (!customerName || !customerPhone) {
-      alert('لطفاً نام و شماره تماس مشتری را وارد کنید');
+    if (!customerFirstName || !customerLastName || !customerPhone) {
+      alert('لطفاً نام، نام خانوادگی و شماره تماس مشتری را وارد کنید');
       return;
     }
 
@@ -199,7 +200,7 @@ export default function CreateInvoicePage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          customerName,
+          customerName: customerFirstName + ' ' + customerLastName,
           customerPhone,
           items: cart.map(item => ({
             type: item.type,
@@ -371,7 +372,8 @@ export default function CreateInvoicePage() {
                           <div
                             key={customer._id}
                             onClick={() => {
-                              setCustomerName(customer.firstName + ' ' + customer.lastName);
+                              setCustomerFirstName(customer.firstName);
+                              setCustomerLastName(customer.lastName);
                               setCustomerPhone(customer.phone);
                               setSelectedCustomerId(customer._id);
                               setCustomerSearchQuery('');
@@ -390,9 +392,22 @@ export default function CreateInvoicePage() {
                       <label className="block text-gray-700 mb-2">نام مشتری</label>
                       <input
                         type="text"
-                        value={customerName}
+                        value={customerFirstName}
                         onChange={(e) => {
-                          setCustomerName(e.target.value);
+                          setCustomerFirstName(e.target.value);
+                          setSelectedCustomerId('');
+                        }}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-700 mb-2">نام خانوادگی</label>
+                      <input
+                        type="text"
+                        value={customerLastName}
+                        onChange={(e) => {
+                          setCustomerLastName(e.target.value);
                           setSelectedCustomerId('');
                         }}
                         className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"

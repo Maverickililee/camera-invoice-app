@@ -238,7 +238,7 @@ export default function CustomersPage() {
                     setFormData({ firstName: '', lastName: '', phone: '' });
                     setShowModal(true);
                   }}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 shadow-lg transition-all duration-200 flex items-center gap-2 whitespace-nowrap text-sm"
+                  className="px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:from-blue-600 hover:to-indigo-600 shadow-lg transition-all duration-200 flex items-center gap-2 whitespace-nowrap text-sm"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
