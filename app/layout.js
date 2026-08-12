@@ -1,10 +1,10 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'سیستم فاکتور فروشگاه دوربین',
+  title: 'سیستم فاکتور فروشگاه دوربین ۶۹۹۱۰۲۱۳',
   description: 'سیستم مدیریت فاکتور و پرداخت',
   other: {
-    enamad: '69910213',
+    enamad: '۶۹۹۱۰۲۱۳',
   },
 };
 
