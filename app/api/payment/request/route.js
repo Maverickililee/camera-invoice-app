@@ -52,6 +52,14 @@ export async function POST(request) {
       ? 'https://sandbox.zarinpal.com/pg/v4/payment/request.json'
       : 'https://api.zarinpal.com/pg/v4/payment/request.json';
 
+    console.log('ZarinPal Request:', {
+      merchantId,
+      amount,
+      description,
+      callbackUrl,
+      zarinpalUrl,
+    });
+
     const response = await fetch(zarinpalUrl, {
       method: 'POST',
       headers: {
@@ -66,11 +74,20 @@ export async function POST(request) {
     });
 
     const data = await response.json();
+    console.log('ZarinPal Response:', data);
 
     if (data.errors && data.errors.length > 0) {
       console.error('Zarinpal request error:', data.errors);
       return NextResponse.json(
-        { error: 'خطا در اتصال به درگاه پرداخت' },
+        { error: 'خطا در اتصال به درگاه پرداخت: ' + JSON.stringify(data.errors) },
+        { status: 500 }
+      );
+    }
+
+    if (!data.data || !data.data.authority) {
+      console.error('ZarinPal invalid response:', data);
+      return NextResponse.json(
+        { error: 'پاسخ نامعتبر از درگاه پرداخت' },
         { status: 500 }
       );
     }
