@@ -5,9 +5,20 @@ import bcrypt from 'bcryptjs';
 
 export async function POST(request) {
   try {
-    await connectToDatabase();
+    try {
+      await connectToDatabase();
+    } catch (e) {
+      console.error('Setup db err:', e);
+      return NextResponse.json({ error: 'خطا در ایجاد کاربر ادمین', detail: 'db' }, { status: 500 });
+    }
 
-    const { username, password } = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      body = {};
+    }
+    const { username, password } = body || {};
 
     if (!username || !password) {
       return NextResponse.json(
@@ -16,8 +27,13 @@ export async function POST(request) {
       );
     }
 
-    // Check if admin already exists
-    const existingUser = await User.findOne({ username });
+    let existingUser;
+    try {
+      existingUser = await User.findOne({ username });
+    } catch (e) {
+      console.error('Setup find err:', e);
+      return NextResponse.json({ error: 'خطا در ایجاد کاربر ادمین', detail: 'find' }, { status: 500 });
+    }
     if (existingUser) {
       return NextResponse.json(
         { error: 'کاربر با این نام کاربری قبلاً ثبت شده است' },
@@ -25,13 +41,24 @@ export async function POST(request) {
       );
     }
 
-    // Create admin user
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({
-      username,
-      password: hashedPassword,
-      isAdmin: true,
-    });
+    let hashedPassword;
+    try {
+      hashedPassword = await bcrypt.hash(password, 10);
+    } catch (e) {
+      console.error('Setup hash err:', e);
+      return NextResponse.json({ error: 'خطا در ایجاد کاربر ادمین', detail: 'hash' }, { status: 500 });
+    }
+    let user;
+    try {
+      user = await User.create({
+        username,
+        password: hashedPassword,
+        isAdmin: true,
+      });
+    } catch (e) {
+      console.error('Setup create err:', e);
+      return NextResponse.json({ error: 'خطا در ایجاد کاربر ادمین', detail: e.message }, { status: 500 });
+    }
 
     return NextResponse.json({ 
       success: true, 
@@ -41,7 +68,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('Setup admin error:', error);
     return NextResponse.json(
-      { error: 'خطا در ایجاد کاربر ادمین' },
+      { error: 'خطا در ایجاد کاربر ادمین', detail: error.message },
       { status: 500 }
     );
   }

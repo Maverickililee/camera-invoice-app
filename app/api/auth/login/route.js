@@ -7,7 +7,13 @@ import { cookies } from 'next/headers';
 
 export async function POST(request) {
   try {
-    const { username, password } = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (e) {
+      return NextResponse.json({ error: 'درخواست نامعتبر', detail: 'json' }, { status: 400 });
+    }
+    const { username, password } = body || {};
 
     if (!username || !password) {
       return NextResponse.json(
@@ -16,9 +22,20 @@ export async function POST(request) {
       );
     }
 
-    await connectToDatabase();
+    try {
+      await connectToDatabase();
+    } catch (e) {
+      console.error('DB connect err:', e);
+      return NextResponse.json({ error: 'خطا در ورود به سیستم', detail: 'db' }, { status: 500 });
+    }
 
-    const user = await User.findOne({ username });
+    let user;
+    try {
+      user = await User.findOne({ username });
+    } catch (e) {
+      console.error('Find user err:', e);
+      return NextResponse.json({ error: 'خطا در ورود به سیستم', detail: 'find' }, { status: 500 });
+    }
 
     if (!user) {
       return NextResponse.json(
@@ -27,7 +44,13 @@ export async function POST(request) {
       );
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    let isPasswordValid;
+    try {
+      isPasswordValid = await bcrypt.compare(password, user.password);
+    } catch (e) {
+      console.error('Bcrypt err:', e);
+      return NextResponse.json({ error: 'خطا در ورود به سیستم', detail: 'bcrypt' }, { status: 500 });
+    }
 
     if (!isPasswordValid) {
       return NextResponse.json(
@@ -36,15 +59,25 @@ export async function POST(request) {
       );
     }
 
-    const token = generateToken(user._id);
+    let token;
+    try {
+      token = generateToken(user._id);
+    } catch (e) {
+      console.error('Token err:', e);
+      return NextResponse.json({ error: 'خطا در ورود به سیستم', detail: 'token' }, { status: 500 });
+    }
 
-    const cookieStore = await cookies();
-    cookieStore.set('auth-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    });
+    try {
+      const cookieStore = await cookies();
+      cookieStore.set('auth-token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    } catch (e) {
+      console.error('Cookie err:', e);
+    }
 
     return NextResponse.json({
       success: true,
@@ -56,7 +89,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(
-      { error: 'خطا در ورود به سیستم' },
+      { error: 'خطا در ورود به سیستم', detail: error.message },
       { status: 500 }
     );
   }
