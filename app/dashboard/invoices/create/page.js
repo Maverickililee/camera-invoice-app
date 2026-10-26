@@ -379,7 +379,7 @@ export default function CreateInvoicePage() {
                               setCustomerPhone(customer.phone);
                               setSelectedCustomerId(customer._id || customer.id);
                               setCustomerSearchQuery('');
-                            }}}
+                            }}
                             className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
                           >
                             <p className="font-medium text-gray-800">
