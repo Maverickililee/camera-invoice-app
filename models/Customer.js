@@ -9,7 +9,7 @@ const Customer = {
     const { data, error } = await q.limit(1).maybeSingle();
     if (error) throw error;
     if (!data) return null;
-    return { ...data, _id: data.id, id: data.id };
+    return { ...data, _id: data.id, id: data.id, firstName: data.first_name, lastName: data.last_name };
   },
   async find(query = {}) {
     if (!supabase) return [];
@@ -17,7 +17,7 @@ const Customer = {
     if (query.phone) q = q.eq('phone', query.phone);
     const { data, error } = await q;
     if (error) throw error;
-    return (data || []).map(d => ({ ...d, _id: d.id, id: d.id }));
+    return (data || []).map(d => ({ ...d, _id: d.id, id: d.id, firstName: d.first_name, lastName: d.last_name }));
   },
   async create(doc) {
     if (!supabase) throw new Error('Supabase not configured');
@@ -47,6 +47,6 @@ const Customer = {
   }
 };
 
-Customer.findById = Customer.findOne;
+Customer.findById = async (id) => Customer.findOne({ _id: id });
 
 export default Customer;

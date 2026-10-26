@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
-import connectToDatabase from '../../../lib/supabase-db.js';
+import { supabase } from '../../../lib/supabase.js';
 import Invoice from '../../../models/Invoice.js';
-import Product from '../../../models/Product.js';
-import Service from '../../../models/Service.js';
-import Customer from '../../../models/Customer.js';
 import { requireAuth } from '../../../lib/auth.js';
+
+function errorMessage(error) {
+  if (!error) return '';
+  return error.message || error.details || String(error);
+}
 
 export async function GET(request) {
   try {
@@ -17,27 +19,24 @@ export async function GET(request) {
       );
     }
 
-    await connectToDatabase();
+    if (!supabase) {
+      return NextResponse.json({ error: 'دیتابیس پیکربندی نشده است' }, { status: 500 });
+    }
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const customerPhone = searchParams.get('customerPhone');
 
-    const query = {};
-    if (status) {
-      query.paymentStatus = status;
-    }
-    if (customerPhone) {
-      query.customerPhone = customerPhone;
-    }
-
-    const invoices = await Invoice.find(query);
+    const invoices = await Invoice.find({
+      ...(status ? { paymentStatus: status } : {}),
+      ...(customerPhone ? { customerPhone } : {}),
+    });
 
     return NextResponse.json({ invoices });
   } catch (error) {
     console.error('Get invoices error:', error);
     return NextResponse.json(
-      { error: 'خطا در دریافت فاکتورها' },
+      { error: 'خطا در دریافت فاکتورها', details: errorMessage(error) },
       { status: 500 }
     );
   }
@@ -46,12 +45,16 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const userId = await requireAuth();
-    
+
     if (!userId) {
       return NextResponse.json(
         { error: 'احراز هویت نشده' },
         { status: 401 }
       );
+    }
+
+    if (!supabase) {
+      return NextResponse.json({ error: 'دیتابیس پیکربندی نشده است' }, { status: 500 });
     }
 
     const { customerName, customerPhone, items } = await request.json();
@@ -63,82 +66,98 @@ export async function POST(request) {
       );
     }
 
-    await connectToDatabase();
+    const { data: existing, error: lookupErr } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('phone', customerPhone)
+      .maybeSingle();
+    if (lookupErr) throw lookupErr;
 
-    // Check if customer exists, if not create new customer
-    let customer = await Customer.findOne({ phone: customerPhone });
+    let customer = existing;
     if (!customer) {
-      const nameParts = customerName.split(' ');
+      const nameParts = String(customerName).trim().split(/\s+/);
       const firstName = nameParts[0] || customerName;
       const lastName = nameParts.slice(1).join(' ') || '-';
-      
-      customer = await Customer.create({
-        firstName,
-        lastName,
-        phone: customerPhone,
-      });
+      const { data: created, error: cErr } = await supabase
+        .from('customers')
+        .insert({ first_name: firstName, last_name: lastName, phone: customerPhone })
+        .select()
+        .single();
+      if (cErr) {
+        if (cErr.code === '23505') {
+          const { data: dup } = await supabase.from('customers').select('*').eq('phone', customerPhone).maybeSingle();
+          customer = dup;
+          if (!customer) throw cErr;
+        } else {
+          throw cErr;
+        }
+      } else {
+        customer = created;
+      }
     }
 
     let totalAmount = 0;
     const populatedItems = [];
 
     for (const item of items) {
+      const quantity = Number(item.quantity) || 1;
       if (item.type === 'product') {
-        const product = await Product.findById(item.productId);
-
-        if (!product) {
+        const productId = item.productId || item.itemId;
+        const { data: product, error: pErr } = await supabase.from('products').select('*').eq('id', productId).maybeSingle();
+        if (pErr || !product) {
           return NextResponse.json(
-            { error: `محصول با شناسه ${item.productId} یافت نشد` },
+            { error: `محصول با شناسه ${productId} یافت نشد` },
             { status: 404 }
           );
         }
-
-        const itemTotal = product.price * item.quantity;
-        totalAmount += itemTotal;
-
+        const price = Number(product.price) || 0;
+        totalAmount += price * quantity;
         populatedItems.push({
-          productId: item.productId,
-          productName: product.name,
+          productId: product.id,
           type: 'product',
-          quantity: item.quantity,
-          price: product.price,
+          quantity,
+          price,
         });
       } else if (item.type === 'service') {
-        const service = await Service.findById(item.serviceId);
-
-        if (!service) {
+        const serviceId = item.serviceId || item.itemId;
+        const { data: service, error: sErr } = await supabase.from('services').select('*').eq('id', serviceId).maybeSingle();
+        if (sErr || !service) {
           return NextResponse.json(
-            { error: `خدمت با شناسه ${item.serviceId} یافت نشد` },
+            { error: `خدمت با شناسه ${serviceId} یافت نشد` },
             { status: 404 }
           );
         }
-
-        const itemTotal = service.price * item.quantity;
-        totalAmount += itemTotal;
-
+        const price = Number(service.price) || 0;
+        totalAmount += price * quantity;
         populatedItems.push({
-          serviceId: item.serviceId,
-          serviceName: service.name,
+          serviceId: service.id,
           type: 'service',
-          quantity: item.quantity,
-          price: service.price,
+          quantity,
+          price,
         });
       }
+    }
+
+    if (populatedItems.length === 0) {
+      return NextResponse.json(
+        { error: 'هیچ آیتم معتبری برای فاکتور وجود ندارد' },
+        { status: 400 }
+      );
     }
 
     const invoice = await Invoice.create({
       customerName,
       customerPhone,
-      items: populatedItems,
       totalAmount,
       paymentStatus: 'pending',
+      items: populatedItems,
     });
 
-    return NextResponse.json({ success: true, invoice }, { status: 201 });
+    return NextResponse.json({ success: true, invoice, customer }, { status: 201 });
   } catch (error) {
     console.error('Create invoice error:', error);
     return NextResponse.json(
-      { error: 'خطا در ایجاد فاکتور' },
+      { error: 'خطا در ایجاد فاکتور', details: errorMessage(error) },
       { status: 500 }
     );
   }

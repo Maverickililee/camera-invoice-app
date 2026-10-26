@@ -193,7 +193,7 @@ export default function InvoicePage({ params }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {invoice.items.map((item, index) => {
+                  {(invoice.items || []).map((item, index) => {
                     const itemName = item.type === 'service' 
                       ? item.service?.name 
                       : item.product?.name;

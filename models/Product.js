@@ -8,14 +8,14 @@ const Product = {
     const { data, error } = await q.limit(1).maybeSingle();
     if (error) throw error;
     if (!data) return null;
-    return { ...data, _id: data.id, id: data.id };
+    return { ...data, _id: data.id, id: data.id, imageUrl: data.image_url, description: data.description || '' };
   },
   async find(query = {}) {
     if (!supabase) return [];
     let q = supabase.from('products').select('*').order('created_at', { ascending: false });
     const { data, error } = await q;
     if (error) throw error;
-    return (data || []).map(d => ({ ...d, _id: d.id, id: d.id }));
+    return (data || []).map(d => ({ ...d, _id: d.id, id: d.id, imageUrl: d.image_url, description: d.description || '' }));
   },
   async create(doc) {
     if (!supabase) throw new Error('Supabase not configured');
@@ -48,6 +48,6 @@ const Product = {
   }
 };
 
-Product.findById = Product.findOne;
+Product.findById = async (id) => Product.findOne({ _id: id });
 
 export default Product;

@@ -231,7 +231,7 @@ export default function CustomerDetailPage({ params }) {
                       <div className="border-t border-gray-200 pt-3 mt-3">
                         <p className="text-sm text-gray-600 mb-2">آیتم‌ها:</p>
                         <div className="space-y-2">
-                          {invoice.items.map((item, idx) => (
+                          {(invoice.items || []).map((item, idx) => (
                             <div key={idx} className="flex justify-between text-sm">
                               <span className="text-gray-700">
                                 {item.type === 'product' 

@@ -37,12 +37,12 @@ export default function CreateInvoicePage() {
   useEffect(() => {
     if (searchQuery) {
       const filteredProducts = products.filter(product =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase())
+        (product.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (product.description || '').toLowerCase().includes(searchQuery.toLowerCase())
       );
       const filteredServices = services.filter(service =>
-        service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        service.description.toLowerCase().includes(searchQuery.toLowerCase())
+        (service.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (service.description || '').toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredProducts(filteredProducts);
       setFilteredServices(filteredServices);
@@ -55,9 +55,9 @@ export default function CreateInvoicePage() {
   useEffect(() => {
     if (customerSearchQuery) {
       const filtered = customers.filter(customer =>
-        customer.firstName.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
-        customer.lastName.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
-        customer.phone.includes(customerSearchQuery)
+        (customer.firstName || customer.first_name || '').toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
+        (customer.lastName || customer.last_name || '').toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
+        String(customer.phone || '').includes(customerSearchQuery)
       );
       setFilteredCustomers(filtered);
     } else {
@@ -128,19 +128,21 @@ export default function CreateInvoicePage() {
   const handleCustomerSelect = (customerId) => {
     setSelectedCustomerId(customerId);
     if (customerId) {
-      const customer = customers.find(c => c._id === customerId);
+      const customer = customers.find(c => c._id === customerId || c.id === customerId);
       if (customer) {
-        setCustomerName(customer.firstName + ' ' + customer.lastName);
+        setCustomerFirstName(customer.firstName || customer.first_name || '');
+        setCustomerLastName(customer.lastName || customer.last_name || '');
         setCustomerPhone(customer.phone);
       }
     } else {
-      setCustomerName('');
+      setCustomerFirstName('');
+      setCustomerLastName('');
       setCustomerPhone('');
     }
   };
 
   const addToCart = (item, type, quantity = 1) => {
-    const itemId = type === 'product' ? item._id : item._id;
+    const itemId = item._id || item.id;
     const existingItem = cart.find(i => i.itemId === itemId && i.type === type);
     
     if (existingItem) {
@@ -156,8 +158,8 @@ export default function CreateInvoicePage() {
         name: item.name,
         price: item.price,
         quantity,
-        productId: type === 'product' ? item._id : undefined,
-        serviceId: type === 'service' ? item._id : undefined,
+        productId: type === 'product' ? itemId : undefined,
+        serviceId: type === 'service' ? itemId : undefined,
       }]);
     }
   };
@@ -214,11 +216,11 @@ export default function CreateInvoicePage() {
       const data = await response.json();
 
       if (response.ok) {
-        setInvoiceId(data.invoice._id);
+        setInvoiceId(data.invoice._id || data.invoice.id);
         setShowPaymentModal(true);
       } else {
         console.error('Create invoice error:', data);
-        alert(data.error || 'خطا در ایجاد فاکتور');
+        alert(data.details ? `${data.error}: ${data.details}` : (data.error || 'خطا در ایجاد فاکتور'));
       }
     } catch (error) {
       console.error('Create invoice catch error:', error);
@@ -372,12 +374,12 @@ export default function CreateInvoicePage() {
                           <div
                             key={customer._id}
                             onClick={() => {
-                              setCustomerFirstName(customer.firstName);
-                              setCustomerLastName(customer.lastName);
+                              setCustomerFirstName(customer.firstName || customer.first_name || '');
+                              setCustomerLastName(customer.lastName || customer.last_name || '');
                               setCustomerPhone(customer.phone);
-                              setSelectedCustomerId(customer._id);
+                              setSelectedCustomerId(customer._id || customer.id);
                               setCustomerSearchQuery('');
-                            }}
+                            }}}
                             className="px-3 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
                           >
                             <p className="font-medium text-gray-800">
