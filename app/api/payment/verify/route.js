@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '../../../../lib/supabase-db.js';
 import Invoice from '../../../../models/Invoice.js';
 
+const isValidMerchantId = (merchantId) => (
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(merchantId || '')
+);
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -20,13 +24,23 @@ export async function GET(request) {
       return NextResponse.redirect(new URL('/?error=notfound', request.url));
     }
 
+    if (invoice.paymentStatus === 'paid') {
+      return NextResponse.redirect(new URL(`/invoice/${invoice._id}?status=success`, request.url));
+    }
+
     if (status === 'OK') {
-      const merchantId = process.env.ZARINPAL_MERCHANT_ID;
-      const mode = process.env.ZARINPAL_MODE || 'sandbox';
+      const merchantId = process.env.ZARINPAL_MERCHANT_ID?.trim();
+      const mode = (process.env.ZARINPAL_MODE || 'sandbox').toLowerCase();
+
+      if (!isValidMerchantId(merchantId)) {
+        console.error('ZarinPal merchant ID is not configured.');
+        await Invoice.findByIdAndUpdate(invoice._id, { paymentStatus: 'failed' });
+        return NextResponse.redirect(new URL(`/invoice/${invoice._id}?status=failed`, request.url));
+      }
       
       const zarinpalUrl = mode === 'sandbox'
         ? 'https://sandbox.zarinpal.com/pg/v4/payment/verify.json'
-        : 'https://api.zarinpal.com/pg/v4/payment/verify.json';
+        : 'https://payment.zarinpal.com/pg/v4/payment/verify.json';
 
       const response = await fetch(zarinpalUrl, {
         method: 'POST',
@@ -35,28 +49,28 @@ export async function GET(request) {
         },
         body: JSON.stringify({
           merchant_id: merchantId,
-          amount: invoice.totalAmount * 10,
+          amount: Number(invoice.totalAmount) * 10, // API تأیید مبلغ را به ریال می‌خواهد
           authority: authority,
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
 
-      if (data.errors && data.errors.length > 0) {
-        console.error('Zarinpal verify error:', data.errors);
-        invoice.paymentStatus = 'failed';
-        await invoice.save();
+      if (!response.ok || data?.errors?.length > 0) {
+        console.error('Zarinpal verify error:', {
+          status: response.status,
+          errors: data?.errors,
+        });
+        await Invoice.findByIdAndUpdate(invoice._id, { paymentStatus: 'failed' });
         return NextResponse.redirect(new URL(`/invoice/${invoice._id}?status=failed`, request.url));
       }
 
-      if (data.data.ref_id) {
-        invoice.paymentStatus = 'paid';
-        await invoice.save();
+      if (data?.data?.ref_id) {
+        await Invoice.findByIdAndUpdate(invoice._id, { paymentStatus: 'paid' });
         return NextResponse.redirect(new URL(`/invoice/${invoice._id}?status=success`, request.url));
       }
     } else {
-      invoice.paymentStatus = 'failed';
-      await invoice.save();
+      await Invoice.findByIdAndUpdate(invoice._id, { paymentStatus: 'failed' });
       return NextResponse.redirect(new URL(`/invoice/${invoice._id}?status=cancelled`, request.url));
     }
 
