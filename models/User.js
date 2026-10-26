@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase.js';
 
 const User = {
   async findOne(query = {}) {
+    if (!supabase) return null;
     let q = supabase.from('users').select('*');
     if (query.username) q = q.eq('username', query.username);
     if (query._id) q = q.eq('id', query._id);
@@ -11,6 +12,7 @@ const User = {
     return { ...data, _id: data.id, id: data.id };
   },
   async find(query = {}) {
+    if (!supabase) return [];
     let q = supabase.from('users').select('*');
     if (query.username) q = q.eq('username', query.username);
     const { data, error } = await q;
@@ -18,6 +20,7 @@ const User = {
     return (data || []).map(d => ({ ...d, _id: d.id, id: d.id }));
   },
   async create(doc) {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase.from('users').insert({
       username: doc.username,
       password: doc.password,
@@ -27,6 +30,7 @@ const User = {
     return { ...data, _id: data.id, id: data.id };
   },
   async countDocuments() {
+    if (!supabase) return 0;
     const { count, error } = await supabase.from('users').select('*', { count: 'exact', head: true });
     if (error) throw error;
     return count || 0;

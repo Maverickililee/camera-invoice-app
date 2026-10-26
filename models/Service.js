@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase.js';
 
 const Service = {
   async findOne(query = {}) {
+    if (!supabase) return null;
     let q = supabase.from('services').select('*');
     if (query._id) q = q.eq('id', query._id);
     const { data, error } = await q.limit(1).maybeSingle();
@@ -10,12 +11,14 @@ const Service = {
     return { ...data, _id: data.id, id: data.id };
   },
   async find(query = {}) {
+    if (!supabase) return [];
     let q = supabase.from('services').select('*').order('created_at', { ascending: false });
     const { data, error } = await q;
     if (error) throw error;
     return (data || []).map(d => ({ ...d, _id: d.id, id: d.id }));
   },
   async create(doc) {
+    if (!supabase) throw new Error('Supabase not configured');
     const { data, error } = await supabase.from('services').insert({
       name: doc.name,
       price: doc.price,
@@ -26,6 +29,7 @@ const Service = {
     return { ...data, _id: data.id, id: data.id, imageUrl: data.image_url };
   },
   async findByIdAndUpdate(id, update) {
+    if (!supabase) throw new Error('Supabase not configured');
     const updates = {};
     if (update.name) updates.name = update.name;
     if (update.price) updates.price = update.price;
@@ -37,6 +41,7 @@ const Service = {
     return { ...data, _id: data.id, id: data.id, imageUrl: data.image_url };
   },
   async findByIdAndDelete(id) {
+    if (!supabase) throw new Error('Supabase not configured');
     const { error } = await supabase.from('services').delete().eq('id', id);
     if (error) throw error;
     return null;
