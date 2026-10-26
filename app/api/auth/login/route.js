@@ -7,35 +7,41 @@ import { cookies } from 'next/headers';
 
 async function handler(request) {
   try {
-    let body = {};
+    let username = '';
+    let password = '';
+    
+    try {
+      const url = new URL(request.url);
+      username = url.searchParams.get('username') || url.searchParams.get('user') || username;
+      password = url.searchParams.get('password') || url.searchParams.get('pass') || password;
+    } catch {}
+    
     try {
       const ct = request.headers.get('content-type') || '';
-      if (ct.includes('application/json')) {
-        body = await request.json();
-      } else if (ct.includes('application/x-www-form-urlencoded')) {
+      if (ct.includes('json')) {
+        const body = await request.json();
+        username = username || body.username || body.user || body.email || '';
+        password = password || body.password || body.pass || body.pwd || '';
+      } else if (ct.includes('form')) {
         const t = await request.text();
-        const params = new URLSearchParams(t);
-        body = { username: params.get('username')||params.get('user'), password: params.get('password')||params.get('pass') };
+        const p = new URLSearchParams(t);
+        username = username || p.get('username') || p.get('user') || '';
+        password = password || p.get('password') || p.get('pass') || '';
       } else {
-        const t = await request.text();
-        try { body = JSON.parse(t||'{}'); } catch {
+        try {
+          const t = await request.text();
           try {
-            const params = new URLSearchParams(t);
-            body = { username: params.get('username')||params.get('user'), password: params.get('password')||params.get('pass') };
-          } catch { body = {}; }
-        }
+            const body = JSON.parse(t);
+            username = username || body.username || body.user || body.email || '';
+            password = password || body.password || body.pass || body.pwd || '';
+          } catch {
+            const p = new URLSearchParams(t);
+            username = username || p.get('username') || p.get('user') || '';
+            password = password || p.get('password') || p.get('pass') || '';
+          }
+        } catch {}
       }
-    } catch { body = {}; }
-
-    let username = body.username || body.user || body.email || body.name || '';
-    let password = body.password || body.pass || body.pwd || body.code || '';
-    if (!username || !password) {
-      try {
-        const url = new URL(request.url);
-        username = username || url.searchParams.get('username')||url.searchParams.get('user')||'';
-        password = password || url.searchParams.get('password')||url.searchParams.get('pass')||'';
-      } catch {}
-    }
+    } catch {}
 
     if (!username || !password) {
       return NextResponse.json({ error: 'نام کاربری و رمز عبور الزامی است' }, { status: 400 });
@@ -64,3 +70,4 @@ async function handler(request) {
 
 export { handler as POST, handler as GET };
 export async function OPTIONS() { return NextResponse.json({}); }
+
