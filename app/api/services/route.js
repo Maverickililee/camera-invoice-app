@@ -6,7 +6,7 @@ import { requireAuth } from '../../../lib/auth.js';
 export async function GET(request) {
   try {
     const userId = await requireAuth();
-    
+
     if (!userId) {
       return NextResponse.json(
         { error: 'احراز هویت نشده' },
@@ -16,7 +16,7 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    const services = await Service.find({}).sort({ createdAt: -1 });
+    const services = await Service.find();
 
     return NextResponse.json({ services });
   } catch (error) {

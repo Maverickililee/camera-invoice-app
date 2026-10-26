@@ -5,7 +5,7 @@ import Customer from '../../../models/Customer.js';
 export async function GET(request) {
   try {
     await connectToDatabase();
-    const customers = await Customer.find().sort({ createdAt: -1 });
+    const customers = await Customer.find();
     return NextResponse.json({ customers });
   } catch (error) {
     console.error('Get customers error:', error);
@@ -52,19 +52,15 @@ export async function PUT(request) {
     const body = await request.json();
     const { id, firstName, lastName, phone } = body;
 
-    const existingCustomer = await Customer.findOne({ phone, _id: { $ne: id } });
-    if (existingCustomer) {
+    const existingCustomer = await Customer.findOne({ phone });
+    if (existingCustomer && existingCustomer._id !== id) {
       return NextResponse.json(
         { error: 'مشتری با این شماره تماس قبلاً ثبت شده است' },
         { status: 400 }
       );
     }
 
-    const customer = await Customer.findByIdAndUpdate(
-      id,
-      { firstName, lastName, phone },
-      { new: true }
-    );
+    const customer = await Customer.findByIdAndUpdate(id, { firstName, lastName, phone });
 
     if (!customer) {
       return NextResponse.json(

@@ -18,16 +18,12 @@ export async function PUT(request, { params }) {
 
     await connectToDatabase();
 
-    const product = await Product.findByIdAndUpdate(
-      params.id,
-      {
-        name,
-        price,
-        description: description || '',
-        imageUrl: imageUrl || '',
-      },
-      { new: true }
-    );
+    const product = await Product.findByIdAndUpdate(params.id, {
+      name,
+      price,
+      description: description || '',
+      imageUrl: imageUrl || '',
+    });
 
     if (!product) {
       return NextResponse.json(

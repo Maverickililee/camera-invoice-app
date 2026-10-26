@@ -9,7 +9,7 @@ import { requireAuth } from '../../../lib/auth.js';
 export async function GET(request) {
   try {
     const userId = await requireAuth();
-    
+
     if (!userId) {
       return NextResponse.json(
         { error: 'احراز هویت نشده' },
@@ -31,10 +31,7 @@ export async function GET(request) {
       query.customerPhone = customerPhone;
     }
 
-    const invoices = await Invoice.find(query)
-      .populate('items.product')
-      .populate('items.service')
-      .sort({ createdAt: -1 });
+    const invoices = await Invoice.find(query);
 
     return NextResponse.json({ invoices });
   } catch (error) {
@@ -135,11 +132,7 @@ export async function POST(request) {
       paymentStatus: 'pending',
     });
 
-    const populatedInvoice = await Invoice.findById(invoice._id)
-      .populate('items.product')
-      .populate('items.service');
-
-    return NextResponse.json({ success: true, invoice: populatedInvoice }, { status: 201 });
+    return NextResponse.json({ success: true, invoice }, { status: 201 });
   } catch (error) {
     console.error('Create invoice error:', error);
     return NextResponse.json(

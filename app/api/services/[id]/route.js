@@ -18,16 +18,12 @@ export async function PUT(request, { params }) {
 
     await connectToDatabase();
 
-    const service = await Service.findByIdAndUpdate(
-      params.id,
-      {
-        name,
-        price,
-        description: description || '',
-        imageUrl: imageUrl || '',
-      },
-      { new: true }
-    );
+    const service = await Service.findByIdAndUpdate(params.id, {
+      name,
+      price,
+      description: description || '',
+      imageUrl: imageUrl || '',
+    });
 
     if (!service) {
       return NextResponse.json(
