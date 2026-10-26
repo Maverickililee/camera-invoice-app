@@ -9,35 +9,33 @@ async function handler(request) {
   try {
     let username = '';
     let password = '';
-    
     try {
       const url = new URL(request.url);
-      username = url.searchParams.get('username') || url.searchParams.get('user') || username;
-      password = url.searchParams.get('password') || url.searchParams.get('pass') || password;
+      username = url.searchParams.get('username') || url.searchParams.get('user') || '';
+      password = url.searchParams.get('password') || url.searchParams.get('pass') || '';
     } catch {}
-    
     try {
       const ct = request.headers.get('content-type') || '';
       if (ct.includes('json')) {
-        const body = await request.json();
-        username = username || body.username || body.user || body.email || '';
-        password = password || body.password || body.pass || body.pwd || '';
-      } else if (ct.includes('form')) {
-        const t = await request.text();
-        const p = new URLSearchParams(t);
-        username = username || p.get('username') || p.get('user') || '';
-        password = password || p.get('password') || p.get('pass') || '';
-      } else {
+        try {
+          const body = await request.json();
+          username = username || body?.username || body?.user || body?.email || '';
+          password = password || body?.password || body?.pass || body?.pwd || '';
+        } catch {}
+      }
+      if ((!username || !password)) {
         try {
           const t = await request.text();
           try {
             const body = JSON.parse(t);
-            username = username || body.username || body.user || body.email || '';
-            password = password || body.password || body.pass || body.pwd || '';
+            username = username || body?.username || body?.user || body?.email || '';
+            password = password || body?.password || body?.pass || body?.pwd || '';
           } catch {
-            const p = new URLSearchParams(t);
-            username = username || p.get('username') || p.get('user') || '';
-            password = password || p.get('password') || p.get('pass') || '';
+            try {
+              const p = new URLSearchParams(t);
+              username = username || p.get('username') || p.get('user') || '';
+              password = password || p.get('password') || p.get('pass') || '';
+            } catch {}
           }
         } catch {}
       }
@@ -52,18 +50,18 @@ async function handler(request) {
     if (!user) {
       return NextResponse.json({ error: 'نام کاربری یا رمز عبور اشتباه است' }, { status: 401 });
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) {
       return NextResponse.json({ error: 'نام کاربری یا رمز عبور اشتباه است' }, { status: 401 });
     }
     const token = generateToken(user._id);
     try {
-      const cookieStore = await cookies();
-      cookieStore.set('auth-token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 60 * 60 * 24 * 7 });
+      const c = await cookies();
+      c.set('auth-token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 60 * 60 * 24 * 7 });
     } catch {}
     return NextResponse.json({ success: true, user: { id: user._id, username: user.username } });
-  } catch (error) {
-    console.error('Login error:', error);
+  } catch (e) {
+    console.error('Login error:', e);
     return NextResponse.json({ error: 'خطا در ورود به سیستم' }, { status: 500 });
   }
 }
