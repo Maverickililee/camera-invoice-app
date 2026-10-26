@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import connectToDatabase from '../../../lib/mongodb.js';
+import connectToDatabase from '../../../lib/supabase-db.js';
 import Invoice from '../../../models/Invoice.js';
 import Product from '../../../models/Product.js';
 import Service from '../../../models/Service.js';
