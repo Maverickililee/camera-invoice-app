@@ -9,15 +9,21 @@ export async function POST(request) {
   try {
     let body = {};
     try {
-      body = await request.json();
+      const contentType = request.headers.get('content-type') || '';
+      if (contentType.includes('json')) {
+        body = await request.json();
+      } else {
+        const text = await request.text();
+        try { body = JSON.parse(text); } catch {}
+      }
     } catch (e) {
       try {
         const text = await request.text();
         try { body = JSON.parse(text); } catch {}
       } catch {}
     }
-    const username = body?.username || body?.user || '';
-    const password = body?.password || body?.pass || '';
+    const username = body?.username || body?.user || body?.email || '';
+    const password = body?.password || body?.pass || body?.pwd || '';
 
     if (!username || !password) {
       return NextResponse.json(
@@ -96,5 +102,36 @@ export async function POST(request) {
       { error: 'خطا در ورود به سیستم', detail: error.message },
       { status: 500 }
     );
+  }
+}
+
+export async function GET(request) {
+  try {
+    let body = {};
+    try {
+      const contentType = request.headers.get('content-type') || '';
+      if (contentType.includes('json')) {
+        body = await request.json();
+      } else {
+        const text = await request.text();
+        try { body = JSON.parse(text); } catch {}
+      }
+    } catch {}
+    const username = body?.username || '';
+    const password = body?.password || '';
+    if (!username || !password) {
+      const url = new URL(request.url);
+      const u = url.searchParams.get('username') || url.searchParams.get('user');
+      const p = url.searchParams.get('password') || url.searchParams.get('pass');
+      if (u && p) {
+        body = { username: u, password: p };
+      } else {
+        return NextResponse.json({ error: 'نام کاربری و رمز عبور الزامی است' }, { status: 400 });
+      }
+    }
+    // reuse
+    return POST(request);
+  } catch (e) {
+    return NextResponse.json({ error: 'err' }, { status: 500 });
   }
 }
