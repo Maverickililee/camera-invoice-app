@@ -9,14 +9,16 @@ const Invoice = {
     const { data, error } = await q.limit(1).maybeSingle();
     if (error) throw error;
     if (!data) return null;
-    return { ...data, _id: data.id, id: data.id };
+    return { ...data, _id: data.id, id: data.id, customerName: data.customer_name, customerPhone: data.customer_phone, totalAmount: data.total_amount, paymentUrl: data.payment_url, paymentStatus: data.payment_status };
   },
   async find(query = {}) {
     if (!supabase) return [];
     let q = supabase.from('invoices').select('*').order('created_at', { ascending: false });
+    if (query.paymentStatus) q = q.eq('payment_status', query.paymentStatus);
+    if (query.customerPhone) q = q.eq('customer_phone', query.customerPhone);
     const { data, error } = await q;
     if (error) throw error;
-    return (data || []).map(d => ({ ...d, _id: d.id, id: d.id }));
+    return (data || []).map(d => ({ ...d, _id: d.id, id: d.id, customerName: d.customer_name, customerPhone: d.customer_phone, totalAmount: d.total_amount, paymentUrl: d.payment_url, paymentStatus: d.payment_status }));
   },
   async create(doc) {
     if (!supabase) throw new Error('Supabase not configured');

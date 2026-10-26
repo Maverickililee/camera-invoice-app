@@ -7,9 +7,7 @@ export async function GET(request, { params }) {
   try {
     await connectToDatabase();
 
-    const invoice = await Invoice.findById(params.id)
-      .populate('items.product')
-      .populate('items.service');
+    const invoice = await Invoice.findById(params.id);
 
     if (!invoice) {
       return NextResponse.json(

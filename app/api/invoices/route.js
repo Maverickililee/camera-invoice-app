@@ -85,7 +85,7 @@ export async function POST(request) {
     for (const item of items) {
       if (item.type === 'product') {
         const product = await Product.findById(item.productId);
-        
+
         if (!product) {
           return NextResponse.json(
             { error: `محصول با شناسه ${item.productId} یافت نشد` },
@@ -97,14 +97,15 @@ export async function POST(request) {
         totalAmount += itemTotal;
 
         populatedItems.push({
-          product: product._id,
+          productId: item.productId,
+          productName: product.name,
           type: 'product',
           quantity: item.quantity,
           price: product.price,
         });
       } else if (item.type === 'service') {
         const service = await Service.findById(item.serviceId);
-        
+
         if (!service) {
           return NextResponse.json(
             { error: `خدمت با شناسه ${item.serviceId} یافت نشد` },
@@ -116,7 +117,8 @@ export async function POST(request) {
         totalAmount += itemTotal;
 
         populatedItems.push({
-          service: service._id,
+          serviceId: item.serviceId,
+          serviceName: service.name,
           type: 'service',
           quantity: item.quantity,
           price: service.price,
