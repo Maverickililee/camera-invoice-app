@@ -265,7 +265,7 @@ export default function DashboardPage() {
             {analytics && analytics.dailyRevenue && (
               <div className="bg-white rounded-2xl shadow-lg shadow-blue-100/50 p-8 border border-gray-100 mb-8">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                  <h2 className="text-xl font-bold text-gray-800">درآمد هفتگی</h2>
+                  <h2 className="text-xl font-bold text-gray-800">درآمد عملیاتی</h2>
                   <div className="flex gap-4">
                     <div className="text-right">
                       <p className="text-xs text-gray-500">کل هفته</p>
@@ -288,8 +288,8 @@ export default function DashboardPage() {
                       const height = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0;
                       return (
                         <div key={index} className="flex-1 flex flex-col items-center group min-w-[60px]">
-                          <div 
-                            className="w-full bg-gradient-to-t from-blue-500 to-indigo-500 rounded-t-lg relative transition-all duration-300 group-hover:from-blue-600 group-hover:to-indigo-600 shadow-md" 
+                          <div
+                            className="w-full bg-gradient-to-t from-blue-500 to-indigo-500 rounded-t-lg relative transition-all duration-300 group-hover:from-blue-600 group-hover:to-indigo-600 shadow-md"
                             style={{ height: `${height}%`, minHeight: '4px' }}
                           >
                             <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 text-xs font-semibold text-gray-700 bg-white px-3 py-2 rounded-lg shadow-lg border border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
@@ -309,48 +309,76 @@ export default function DashboardPage() {
             )}
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <a href="/dashboard/products" className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer">
-                <div className="flex items-center gap-4">
-                  <div className="bg-blue-100 p-3 rounded-lg">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Create Invoice Card - Prominent */}
+              <a href="/dashboard/invoices/create" className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg shadow-blue-200/50 p-8 hover:shadow-xl transition-all duration-300 group">
+                <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-semibold text-gray-800">مدیریت محصولات</h3>
-                    <p className="text-sm text-gray-500">افزودن، ویرایش و حذف محصولات</p>
+                    <h3 className="text-2xl font-bold text-white mb-2">ایجاد فاکتور جدید</h3>
+                    <p className="text-blue-100 text-sm">ساخت فاکتور جدید برای مشتری</p>
                   </div>
-                </div>
-              </a>
-
-              <a href="/dashboard/invoices/create" className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer">
-                <div className="flex items-center gap-4">
-                  <div className="bg-green-100 p-3 rounded-lg">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="bg-white/20 p-4 rounded-2xl group-hover:bg-white/30 transition-all duration-300">
+                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">ایجاد فاکتور</h3>
-                    <p className="text-sm text-gray-500">ساخت فاکتور جدید برای مشتری</p>
-                  </div>
                 </div>
               </a>
 
-              <a href="/dashboard/invoices" className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer">
-                <div className="flex items-center gap-4">
-                  <div className="bg-purple-100 p-3 rounded-lg">
-                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
+              {/* Other Actions */}
+              <div className="grid grid-cols-2 gap-4">
+                <a href="/dashboard/products" className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition cursor-pointer">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="bg-blue-100 p-3 rounded-xl">
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-800 text-sm">محصولات</h3>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">تاریخچه فاکتورها</h3>
-                    <p className="text-sm text-gray-500">مشاهده فاکتورهای قبلی</p>
+                </a>
+
+                <a href="/dashboard/services" className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition cursor-pointer">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="bg-purple-100 p-3 rounded-xl">
+                      <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-800 text-sm">خدمات</h3>
+                    </div>
                   </div>
-                </div>
-              </a>
+                </a>
+
+                <a href="/dashboard/customers" className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition cursor-pointer">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="bg-green-100 p-3 rounded-xl">
+                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-800 text-sm">مشتریان</h3>
+                    </div>
+                  </div>
+                </a>
+
+                <a href="/dashboard/invoices" className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition cursor-pointer">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="bg-orange-100 p-3 rounded-xl">
+                      <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-800 text-sm">فاکتورها</h3>
+                    </div>
+                  </div>
+                </a>
+              </div>
             </div>
           </div>
         </main>
