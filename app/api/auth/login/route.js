@@ -9,9 +9,14 @@ export async function POST(request) {
   try {
     let body;
     try {
-      body = await request.json();
+      const text = await request.text();
+      body = JSON.parse(text);
     } catch (e) {
-      return NextResponse.json({ error: 'درخواست نامعتبر', detail: 'json' }, { status: 400 });
+      try {
+        body = await request.json();
+      } catch (e2) {
+        return NextResponse.json({ error: 'درخواست نامعتبر', detail: 'json' }, { status: 400 });
+      }
     }
     const { username, password } = body || {};
 
