@@ -1,23 +1,47 @@
-import mongoose from 'mongoose';
+import { supabase } from '../lib/supabase.js';
 
-const CustomerSchema = new mongoose.Schema({
-  firstName: {
-    type: String,
-    required: true,
+const Customer = {
+  async findOne(query = {}) {
+    let q = supabase.from('customers').select('*');
+    if (query.phone) q = q.eq('phone', query.phone);
+    if (query._id) q = q.eq('id', query._id);
+    const { data, error } = await q.limit(1).maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return { ...data, _id: data.id, id: data.id };
   },
-  lastName: {
-    type: String,
-    required: true,
+  async find(query = {}) {
+    let q = supabase.from('customers').select('*');
+    if (query.phone) q = q.eq('phone', query.phone);
+    const { data, error } = await q;
+    if (error) throw error;
+    return (data || []).map(d => ({ ...d, _id: d.id, id: d.id }));
   },
-  phone: {
-    type: String,
-    required: true,
-    unique: true,
+  async create(doc) {
+    const { data, error } = await supabase.from('customers').insert({
+      first_name: doc.firstName,
+      last_name: doc.lastName,
+      phone: doc.phone,
+    }).select().single();
+    if (error) throw error;
+    return { ...data, _id: data.id, id: data.id, firstName: data.first_name, lastName: data.last_name };
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
+  async findByIdAndUpdate(id, update) {
+    const updates = {};
+    if (update.firstName) updates.first_name = update.firstName;
+    if (update.lastName) updates.last_name = update.lastName;
+    if (update.phone) updates.phone = update.phone;
+    const { data, error } = await supabase.from('customers').update(updates).eq('id', id).select().single();
+    if (error) throw error;
+    return { ...data, _id: data.id, id: data.id, firstName: data.first_name, lastName: data.last_name };
   },
-});
+  async findByIdAndDelete(id) {
+    const { error } = await supabase.from('customers').delete().eq('id', id);
+    if (error) throw error;
+    return null;
+  }
+};
 
-export default mongoose.models.Customer || mongoose.model('Customer', CustomerSchema);
+Customer.findById = Customer.findOne;
+
+export default Customer;
