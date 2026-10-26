@@ -18,13 +18,13 @@ async function handler(request) {
       const ct = (request.headers.get('content-type') || '').toLowerCase();
       if (ct.includes('json')) {
         try {
-          const body = await request.json();
+          const raw = await request.text();
+          const body = JSON.parse(raw);
           username = username || body?.username || body?.user || body?.email || body?.login || '';
-          password = password || body?.password || body?.pass || body?.pwd || body?.token || '';
+          password = password || body?.password || body?.pass || body?.pwd || '';
         } catch {
           try {
-            const t = await request.text();
-            const body = JSON.parse(t||'{}');
+            const body = await request.json();
             username = username || body?.username || body?.user || body?.email || '';
             password = password || body?.password || body?.pass || body?.pwd || '';
           } catch {}
@@ -33,7 +33,7 @@ async function handler(request) {
         try {
           const t = await request.text();
           try {
-            const body = JSON.parse(t||'{}');
+            const body = JSON.parse(t);
             username = username || body?.username || body?.user || body?.email || '';
             password = password || body?.password || body?.pass || body?.pwd || '';
           } catch {
@@ -74,4 +74,5 @@ async function handler(request) {
 
 export { handler as POST, handler as GET };
 export async function OPTIONS() { return NextResponse.json({}); }
+
 
