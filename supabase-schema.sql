@@ -41,21 +41,11 @@ CREATE TABLE IF NOT EXISTS invoices (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   customer_name VARCHAR(255) NOT NULL,
   customer_phone VARCHAR(255) NOT NULL,
+  items JSONB DEFAULT '[]'::jsonb,
   total_amount DECIMAL(10,0) NOT NULL,
   payment_url TEXT DEFAULT '',
   payment_status VARCHAR(50) DEFAULT 'pending',
   authority VARCHAR(255) DEFAULT '',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS invoice_items (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  invoice_id UUID REFERENCES invoices(id) ON DELETE CASCADE,
-  product_id UUID REFERENCES products(id),
-  service_id UUID REFERENCES services(id),
-  type VARCHAR(50) NOT NULL CHECK (type IN ('product', 'service')),
-  quantity INTEGER NOT NULL DEFAULT 1,
-  price DECIMAL(10,0) NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
