@@ -18,17 +18,11 @@ async function handler(request) {
       const ct = (request.headers.get('content-type') || '').toLowerCase();
       if (ct.includes('json')) {
         try {
-          const raw = await request.text();
-          const body = JSON.parse(raw);
-          username = username || body?.username || body?.user || body?.email || body?.login || '';
+          const t = await request.text();
+          const body = JSON.parse(t);
+          username = username || body?.username || body?.user || body?.email || '';
           password = password || body?.password || body?.pass || body?.pwd || '';
-        } catch {
-          try {
-            const body = await request.json();
-            username = username || body?.username || body?.user || body?.email || '';
-            password = password || body?.password || body?.pass || body?.pwd || '';
-          } catch {}
-        }
+        } catch {}
       } else {
         try {
           const t = await request.text();
@@ -51,16 +45,39 @@ async function handler(request) {
       return NextResponse.json({ error: 'نام کاربری و رمز عبور الزامی است' }, { status: 400 });
     }
 
-    await connectToDatabase();
-    const user = await User.findOne({ username });
+    try {
+      await connectToDatabase();
+    } catch (e) {
+      console.error('db err', e);
+      return NextResponse.json({ error: 'خطا در ورود به سیستم', detail: 'db' }, { status: 500 });
+    }
+    let user;
+    try {
+      user = await User.findOne({ username });
+    } catch (e) {
+      console.error('user err', e);
+      return NextResponse.json({ error: 'خطا در ورود به سیستم', detail: 'find' }, { status: 500 });
+    }
     if (!user) {
       return NextResponse.json({ error: 'نام کاربری یا رمز عبور اشتباه است' }, { status: 401 });
     }
-    const ok = await bcrypt.compare(password, user.password);
+    let ok;
+    try {
+      ok = await bcrypt.compare(password, user.password);
+    } catch (e) {
+      console.error('bcrypt err', e);
+      return NextResponse.json({ error: 'خطا در ورود به سیستم', detail: 'bcrypt' }, { status: 500 });
+    }
     if (!ok) {
       return NextResponse.json({ error: 'نام کاربری یا رمز عبور اشتباه است' }, { status: 401 });
     }
-    const token = generateToken(user._id);
+    let token;
+    try {
+      token = generateToken(user._id);
+    } catch (e) {
+      console.error('token err', e);
+      return NextResponse.json({ error: 'خطا در ورود به سیستم', detail: 'token' }, { status: 500 });
+    }
     try {
       const c = await cookies();
       c.set('auth-token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 60 * 60 * 24 * 7 });
@@ -68,11 +85,12 @@ async function handler(request) {
     return NextResponse.json({ success: true, user: { id: user._id, username: user.username } });
   } catch (e) {
     console.error('Login error:', e);
-    return NextResponse.json({ error: 'خطا در ورود به سیستم' }, { status: 500 });
+    return NextResponse.json({ error: 'خطا در ورود به سیستم', detail: e.message }, { status: 500 });
   }
 }
 
 export { handler as POST, handler as GET };
 export async function OPTIONS() { return NextResponse.json({}); }
+
 
 
