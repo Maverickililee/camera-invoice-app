@@ -7,18 +7,17 @@ import { cookies } from 'next/headers';
 
 export async function POST(request) {
   try {
-    let body;
+    let body = {};
     try {
-      const text = await request.text();
-      body = JSON.parse(text);
+      body = await request.json();
     } catch (e) {
       try {
-        body = await request.json();
-      } catch (e2) {
-        return NextResponse.json({ error: 'درخواست نامعتبر', detail: 'json' }, { status: 400 });
-      }
+        const text = await request.text();
+        try { body = JSON.parse(text); } catch {}
+      } catch {}
     }
-    const { username, password } = body || {};
+    const username = body?.username || body?.user || '';
+    const password = body?.password || body?.pass || '';
 
     if (!username || !password) {
       return NextResponse.json(
