@@ -50,6 +50,26 @@ export default function InvoicesPage() {
     }
   };
 
+  const handleDelete = async (invoice) => {
+    const invoiceNumber = invoice._id.substring(invoice._id.length - 8);
+    if (!confirm(`فاکتور شماره ${invoiceNumber} حذف شود؟ این عمل قابل بازگشت نیست.`)) return;
+
+    try {
+      const response = await fetch(`/api/invoices/${invoice._id}`, { method: 'DELETE' });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        alert(data.error || 'خطا در حذف فاکتور');
+        return;
+      }
+
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+      alert('خطا در ارتباط با سرور هنگام حذف فاکتور');
+    }
+  };
+
   const getStatusClass = (status) => {
     switch (status) {
       case 'paid': return 'bg-green-100 text-green-800';
@@ -234,11 +254,18 @@ export default function InvoicesPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <a
                             href={`/invoice/${invoice._id}`}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-blue-600 hover:text-blue-900 ml-3"
                             target="_blank"
                           >
                             مشاهده
                           </a>
+                          <button
+                            onClick={() => handleDelete(invoice)}
+                            className="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-red-600 hover:bg-red-50 hover:text-red-800 transition"
+                            aria-label={`حذف فاکتور شماره ${invoice._id.substring(invoice._id.length - 8)}`}
+                          >
+                            حذف
+                          </button>
                         </td>
                       </tr>
                     ))

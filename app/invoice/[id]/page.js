@@ -11,6 +11,7 @@ export default function InvoicePage({ params }) {
   const [error, setError] = useState('');
   const paymentStatus = searchParams.get('status');
   const [copied, setCopied] = useState(false);
+  const [paymentLinkCopied, setPaymentLinkCopied] = useState(false);
 
   useEffect(() => {
     fetchInvoice();
@@ -40,10 +41,15 @@ export default function InvoicePage({ params }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const copyPaymentLink = () => {
-    if (invoice.paymentUrl) {
-      navigator.clipboard.writeText(invoice.paymentUrl);
-      alert('لینک پرداخت کپی شد');
+  const copyPaymentLink = async () => {
+    if (!invoice?.paymentUrl) return;
+
+    try {
+      await navigator.clipboard.writeText(invoice.paymentUrl);
+      setPaymentLinkCopied(true);
+      setTimeout(() => setPaymentLinkCopied(false), 2000);
+    } catch (error) {
+      alert('کپی لینک پرداخت انجام نشد. لطفاً لینک را دستی کپی کنید.');
     }
   };
 
@@ -100,7 +106,7 @@ export default function InvoicePage({ params }) {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
       <div className="max-w-3xl mx-auto">
         {/* Invoice Link at Top */}
-        <div className="bg-white rounded-lg shadow-lg p-4 mb-6 flex items-center justify-between">
+        <div className="bg-white rounded-lg shadow-lg p-4 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="bg-blue-100 p-2 rounded-lg">
               <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,12 +118,25 @@ export default function InvoicePage({ params }) {
               <p className="text-xs text-gray-400">{window.location.href}</p>
             </div>
           </div>
-          <button
-            onClick={copyInvoiceLink}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
-          >
-            {copied ? 'کپی شد!' : 'کپی لینک'}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {invoice.paymentStatus === 'pending' && invoice.paymentUrl && (
+              <button
+                type="button"
+                onClick={copyPaymentLink}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center gap-2"
+                aria-label="کپی سریع لینک پرداخت"
+              >
+                {paymentLinkCopied ? 'لینک پرداخت کپی شد' : 'کپی سریع لینک پرداخت'}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={copyInvoiceLink}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+            >
+              {copied ? 'کپی شد!' : 'کپی لینک فاکتور'}
+            </button>
+          </div>
         </div>
 
         {/* Payment Status Messages */}
@@ -233,7 +252,7 @@ export default function InvoicePage({ params }) {
                   onClick={copyPaymentLink}
                   className="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
                 >
-                  کپی لینک پرداخت
+                  {paymentLinkCopied ? 'لینک پرداخت کپی شد' : 'کپی لینک پرداخت'}
                 </button>
                 <button
                   onClick={() => window.open(invoice.paymentUrl, '_blank')}

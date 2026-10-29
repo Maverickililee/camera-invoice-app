@@ -131,7 +131,9 @@ const Invoice = {
   async findByIdAndDelete(id) {
     if (!supabase) throw new Error('Supabase not configured');
     const inv = await Invoice.findById(id);
-    await supabase.from('invoice_items').delete().eq('invoice_id', id);
+    if (!inv) return null;
+    const { error: itemsError } = await supabase.from('invoice_items').delete().eq('invoice_id', id);
+    if (itemsError) throw itemsError;
     const { error } = await supabase.from('invoices').delete().eq('id', id);
     if (error) throw error;
     return inv;

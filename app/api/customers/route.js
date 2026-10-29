@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectToDatabase from '../../../lib/supabase-db.js';
 import Customer from '../../../models/Customer.js';
+import { requireAuth } from '../../../lib/auth.js';
 
 export async function GET(request) {
   try {
@@ -81,9 +82,18 @@ export async function PUT(request) {
 
 export async function DELETE(request) {
   try {
+    const userId = await requireAuth();
+    if (!userId) {
+      return NextResponse.json({ error: 'احراز هویت نشده' }, { status: 401 });
+    }
+
     await connectToDatabase();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'شناسه مشتری الزامی است' }, { status: 400 });
+    }
 
     const customer = await Customer.findByIdAndDelete(id);
 

@@ -118,7 +118,8 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('آیا از حذف این محصول مطمئن هستید؟')) {
+    const product = products.find((item) => item._id === id);
+    if (!confirm(`آیا از حذف محصول «${product?.name || ''}» مطمئن هستید؟ این عمل قابل بازگشت نیست.`)) {
       return;
     }
 
@@ -128,10 +129,14 @@ export default function ProductsPage() {
       });
 
       if (response.ok) {
-        fetchProducts();
+        window.location.reload();
+      } else {
+        const data = await response.json().catch(() => ({}));
+        alert(data.error || 'خطا در حذف محصول');
       }
     } catch (error) {
       console.error('Error deleting product:', error);
+      alert('خطا در ارتباط با سرور هنگام حذف محصول');
     }
   };
 
@@ -348,7 +353,8 @@ export default function ProductsPage() {
                         </button>
                         <button
                           onClick={() => handleDelete(product._id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-red-600 hover:bg-red-50 hover:text-red-800 transition"
+                          aria-label={`حذف محصول ${product.name}`}
                         >
                           حذف
                         </button>

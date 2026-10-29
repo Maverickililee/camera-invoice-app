@@ -23,6 +23,7 @@ export default function CreateInvoicePage() {
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [invoiceId, setInvoiceId] = useState(null);
   const [paymentUrl, setPaymentUrl] = useState('');
+  const [paymentError, setPaymentError] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [activeTab, setActiveTab] = useState('products');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -217,6 +218,8 @@ export default function CreateInvoicePage() {
 
       if (response.ok) {
         setInvoiceId(data.invoice._id || data.invoice.id);
+        setPaymentUrl(data.paymentUrl || data.invoice.paymentUrl || '');
+        setPaymentError(data.paymentError || '');
         setShowPaymentModal(true);
       } else {
         console.error('Create invoice error:', data);
@@ -242,11 +245,12 @@ export default function CreateInvoicePage() {
 
       if (response.ok) {
         setPaymentUrl(data.paymentUrl);
+        setPaymentError('');
       } else {
-        alert(data.error || 'خطا در درخواست پرداخت');
+        setPaymentError(data.error || 'خطا در درخواست پرداخت');
       }
     } catch (error) {
-      alert('خطا در ارتباط با سرور');
+      setPaymentError('خطا در ارتباط با سرور هنگام ساخت لینک پرداخت');
     }
   };
 
@@ -617,13 +621,14 @@ export default function CreateInvoicePage() {
             
             {!paymentUrl ? (
               <>
-                <p className="text-gray-600 mb-6">فاکتور با موفقیت ایجاد شد. آیا می‌خواهید لینک پرداخت را بسازید؟</p>
+                <p className="text-gray-600 mb-3">فاکتور ساخته شد، اما لینک پرداخت خودکار ایجاد نشد. می‌توانید دوباره تلاش کنید یا فاکتور را مشاهده کنید.</p>
+                {paymentError && <p className="text-sm text-red-600 mb-4">{paymentError}</p>}
                 <div className="flex gap-3">
                   <button 
                     onClick={handleRequestPayment}
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                   >
-                    ساخت لینک پرداخت
+                    تلاش مجدد برای ساخت لینک
                   </button>
                   <button 
                     onClick={() => router.push(`/invoice/${invoiceId}`)}

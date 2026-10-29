@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase.js';
 import Invoice from '../../../models/Invoice.js';
 import { requireAuth } from '../../../lib/auth.js';
+import { createZarinpalPayment } from '../../../lib/zarinpal.js';
 
 function errorMessage(error) {
   if (!error) return '';
@@ -145,7 +146,7 @@ export async function POST(request) {
       );
     }
 
-    const invoice = await Invoice.create({
+    let invoice = await Invoice.create({
       customerName,
       customerPhone,
       totalAmount,
@@ -153,7 +154,27 @@ export async function POST(request) {
       items: populatedItems,
     });
 
-    return NextResponse.json({ success: true, invoice, customer }, { status: 201 });
+    let paymentError = null;
+    try {
+      const { authority, paymentUrl } = await createZarinpalPayment(
+        invoice,
+        new URL(request.url).origin
+      );
+      const updatedInvoice = await Invoice.findByIdAndUpdate(invoice._id, { authority, paymentUrl });
+      if (!updatedInvoice) throw new Error('لینک پرداخت ساخته شد اما ذخیرهٔ فاکتور انجام نشد');
+      invoice = updatedInvoice;
+    } catch (error) {
+      console.error('Automatic payment link creation failed:', error);
+      paymentError = error.message || 'ساخت خودکار لینک پرداخت ناموفق بود';
+    }
+
+    return NextResponse.json({
+      success: true,
+      invoice,
+      customer,
+      paymentUrl: invoice?.paymentUrl || '',
+      paymentError,
+    }, { status: 201 });
   } catch (error) {
     console.error('Create invoice error:', error);
     return NextResponse.json(

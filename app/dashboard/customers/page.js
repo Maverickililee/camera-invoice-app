@@ -117,7 +117,7 @@ export default function CustomersPage() {
       });
 
       if (response.ok) {
-        fetchCustomers();
+        window.location.reload();
       } else {
         const data = await response.json();
         alert(data.error || 'خطا در حذف مشتری');
@@ -300,7 +300,8 @@ export default function CustomersPage() {
                         </button>
                         <button
                           onClick={() => handleDelete(customer._id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-red-600 hover:bg-red-50 hover:text-red-800 transition"
+                          aria-label={`حذف مشتری ${customer.firstName} ${customer.lastName}`}
                         >
                           حذف
                         </button>

@@ -109,7 +109,8 @@ export default function ServicesPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('آیا مطمئن هستید؟')) return;
+    const service = services.find((item) => item._id === id);
+    if (!confirm(`آیا از حذف خدمت «${service?.name || ''}» مطمئن هستید؟ این عمل قابل بازگشت نیست.`)) return;
 
     try {
       const response = await fetch(`/api/services/${id}`, {
@@ -117,10 +118,14 @@ export default function ServicesPage() {
       });
 
       if (response.ok) {
-        fetchServices();
+        window.location.reload();
+      } else {
+        const data = await response.json().catch(() => ({}));
+        alert(data.error || 'خطا در حذف خدمت');
       }
     } catch (error) {
       console.error('Error deleting service:', error);
+      alert('خطا در ارتباط با سرور هنگام حذف خدمت');
     }
   };
 
@@ -337,7 +342,8 @@ export default function ServicesPage() {
                         </button>
                         <button
                           onClick={() => handleDelete(service._id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="inline-flex items-center rounded-lg border border-red-200 px-3 py-1.5 text-red-600 hover:bg-red-50 hover:text-red-800 transition"
+                          aria-label={`حذف خدمت ${service.name}`}
                         >
                           حذف
                         </button>

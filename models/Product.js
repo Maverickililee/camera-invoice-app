@@ -42,9 +42,10 @@ const Product = {
   },
   async findByIdAndDelete(id) {
     if (!supabase) throw new Error('Supabase not configured');
-    const { error } = await supabase.from('products').delete().eq('id', id);
+    const { data, error } = await supabase.from('products').delete().eq('id', id).select().maybeSingle();
     if (error) throw error;
-    return null;
+    if (!data) return null;
+    return { ...data, _id: data.id, id: data.id, imageUrl: data.image_url };
   }
 };
 
